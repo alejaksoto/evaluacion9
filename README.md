@@ -1,10 +1,4 @@
-a
-F
-Bcion de repositorio
-D
-D
-A
-F
-pdo creaciN
-
-
+Api de whatsapp
+url de inscripción
+pagina de inscripción
+envío de mensaje de texto
