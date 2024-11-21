@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro y Login</title>
+  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background-color: #f5f5f5;
+    }
+    form {
+      margin-bottom: 20px;
+      padding: 20px;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    input {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #1877f2;
+      border: none;
+      color: #fff;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #145dbf;
+    }
+  </style>
+</head>
+<body>
+  <section>
+    <div>
+        <h1>Generar Enlace de Registro de WhatsApp</h1>
+    <form id="signup-form">
+        <label for="businessName">Nombre del Negocio:</label>
+        <input type="text" id="businessName" name="businessName" required />
+
+        <label for="vertical">Categoría del Negocio (Vertical):</label>
+        <select id="vertical" name="vertical" required>
+            <option value="RETAIL">Retail</option>
+            <option value="EDUCATION">Educación</option>
+            <option value="E_COMMERCE">E-commerce</option>
+            <option value="HEALTH">Salud</option>
+            <!-- Agrega más opciones según tu necesidad -->
+        </select>
+
+        <button type="submit">Generar Enlace</button>
+    </form>
+
+    <div id="result"></div>
+
+    </div>
+  </section>
+  <script>
+    // Configuración del SDK de Facebook
+    window.fbAsyncInit = function () {
+      FB.init({
+        appId: "<APP_ID>", // Tu App ID
+        autoLogAppEvents: true,
+        xfbml: true,
+        version: "v21.0",
+      });
+    };
+
+    // Lógica para enviar datos del formulario al backend
+    
+//logica de generar url de registro
+    document.getElementById('signup-form').addEventListener('submit', async (e) => {
+    e.preventDefault(); // Evitar el envío por defecto del formulario
+
+    // Capturar los datos del formulario
+    const businessName = document.getElementById('businessName').value;
+    const vertical = document.getElementById('vertical').value;
+
+    try {
+        // Hacer la solicitud al backend
+        const response = await fetch('http://localhost:3000/create-signup-link', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ businessName, vertical }),
+        });
+
+        if (!response.ok) {
+            throw new Error('No se pudo generar el enlace de registro.');
+        }
+
+        const data = await response.json();
+
+        // Mostrar el enlace generado
+        document.getElementById('result').innerHTML = `
+            <p>Enlace de registro generado con éxito:</p>
+            <a href="${data.signup_url}" target="_blank">${data.signup_url}</a>
+            <p>Enlace de registro generado con éxito: 
+            <a id="signup-link" href="#">Clic aquí para registrarte</a>
+</p>
+        `;
+        document.getElementById('signup-link').addEventListener('click', (event) => {
+          event.preventDefault(); // Evita que el enlace realice la acción predeterminada
+          const businessName = document.getElementById('businessName').value; // Obtiene el nombre del negocio
+          const redirectUrl = `http://127.0.0.1:5500/src/register.html`;
+          //http://127.0.0.1:3000/src/register.html?businessName=${encodeURIComponent(businessName)}`;
+          window.location.href = redirectUrl; // Redirige a la página de registro
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('result').innerHTML = `
+            <p style="color: red;">Error al generar el enlace de registro.</p>
+        `;
+    }
+    });
+   
+    
+  </script>
+</body>
+</html>

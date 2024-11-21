@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro y Login</title>
+  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background-color: #f5f5f5;
+    }
+    form {
+      margin-bottom: 20px;
+      padding: 20px;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    input {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #1877f2;
+      border: none;
+      color: #fff;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #145dbf;
+    }
+  </style>
+</head>
+<body>
+  <h1>Registro de Empresa</h1>
+
+  <!-- Formulario para registrar la empresa -->
+  <form id="registerForm">
+    <label for="companyName">Nombre de la Empresa:</label>
+    <input type="text" id="companyName" name="companyName" placeholder="Tu empresa" required />
+
+    <label for="webhookUrl">URL del Webhook:</label>
+    <input type="url" id="webhookUrl" name="webhookUrl" placeholder="https://tuwebhook.com" required />
+
+    <label for="Celular">Celular</label>
+    <input type="text" id="Celular" name="Celular" placeholder="+57" required />
+
+    <button type="submit">Registrar Empresa</button>
+  </form>
+
+  <h2>Inicio de Sesión con Facebook</h2>
+  <!-- Botón de Embedded Signup -->
+  <button onclick="launchWhatsAppSignup()">Iniciar sesión con Facebook</button>
+  
+  <script>
+    //recibir la url
+    // Capturar parámetros de la URL
+  const params = new URLSearchParams(window.location.search);
+  const businessName = params.get('businessName');
+
+// Mostrar el nombre del negocio en el formulario de registro
+  if (businessName) {
+    document.getElementById('business-name-field').value = decodeURIComponent(businessName);
+  }
+
+    // Configuración del SDK de Facebook
+    window.fbAsyncInit = function () {
+      FB.init({
+        appId: "<APP_ID>", // Tu App ID
+        autoLogAppEvents: true,
+        xfbml: true,
+        version: "v21.0",
+      });
+    };
+
+    // Lógica para enviar datos del formulario al backend
+    const registerForm = document.getElementById("registerForm");
+    registerForm.addEventListener("submit", async (event) => {
+      event.preventDefault(); // Evita que se recargue la página
+
+      const companyName = document.getElementById("companyName").value;
+      const webhookUrl = document.getElementById("webhookUrl").value;
+      const phoneNumber = document.getElementById("Celular").value;
+
+      try {
+        const response = await fetch("http://localhost:3000/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ companyName, webhookUrl,phoneNumber }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert(`Registro exitoso: ${data.message}`);
+          console.log("Datos registrados:", data.data);
+        } else {
+          alert(`Error en el registro: ${data.error}`);
+        }
+      } catch (error) {
+        console.error("Error al enviar datos:", error);
+        alert("Hubo un error al enviar el formulario. Inténtalo más tarde.");
+      }
+    });
+//logica de generar url de registro
+   
+    // Lógica de Embedded Signup para iniciar sesión con Facebook
+    const fbLoginCallback = (response) => {
+      if (response.authResponse) {
+        const code = response.authResponse.code;
+        console.log("Token intercambiable recibido:", code);
+
+        // Envía este código al backend
+        fetch("/process-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        })
+          .then((res) => res.json())
+          .then((data) => console.log("Respuesta del backend:", data))
+          .catch((err) => console.error(err));
+      } else {
+        console.log("Error en el login:", response);
+      }
+    };
+
+    const launchWhatsAppSignup = () => {
+      FB.login(fbLoginCallback, {
+        config_id: "<CONFIG_ID>", // Tu Config ID
+        response_type: "code",
+        override_default_response_type: true,
+        extras: {
+          setup: {},
+          featureType: "",
+          sessionInfoVersion: "3",
+        },
+      });
+    };
+  </script>
+</body>
+</html>
